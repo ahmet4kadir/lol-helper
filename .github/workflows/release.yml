@@ -1,12 +1,13 @@
 name: Release
 
-# Pushing a tag like v0.2.0 builds the Windows installer and publishes it as a
-# GitHub Release together with latest.yml, which installed copies poll for
-# auto-updates.
+# Every push to main checks package.json's version. If that version has no
+# GitHub Release yet, the Windows installer is built and published together
+# with latest.yml, which installed copies poll for auto-updates. Bumping the
+# version is therefore the whole release process.
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -17,18 +18,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Read version
+        id: v
+        shell: bash
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Already released?
+        id: exists
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "v${{ steps.v.outputs.version }}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "yes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "yes=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-node@v4
+        if: steps.exists.outputs.yes == 'false'
         with:
           node-version: 22
           cache: npm
 
       - name: Install
+        if: steps.exists.outputs.yes == 'false'
         run: npm install --no-audit --no-fund
 
       - name: Typecheck
+        if: steps.exists.outputs.yes == 'false'
         run: npm run typecheck
 
-      - name: Build and publish
+      - name: Build and publish v${{ steps.v.outputs.version }}
+        if: steps.exists.outputs.yes == 'false'
         run: npm run release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
