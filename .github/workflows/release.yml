@@ -39,7 +39,6 @@ jobs:
         if: steps.exists.outputs.yes == 'false'
         with:
           node-version: 22
-          cache: npm
 
       - name: Install
         if: steps.exists.outputs.yes == 'false'
