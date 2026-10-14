@@ -50,6 +50,21 @@ jobs:
 
       - name: Build and publish v${{ steps.v.outputs.version }}
         if: steps.exists.outputs.yes == 'false'
-        run: npm run release
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run release 2>&1 | tee build.log
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # The job summary is public even when logs require sign-in.
+      - name: Summary
+        if: always() && steps.exists.outputs.yes == 'false'
+        shell: bash
+        run: |
+          {
+            echo '### Build log (tail)'
+            echo '```'
+            tail -n 120 build.log 2>/dev/null || echo 'no build.log'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
