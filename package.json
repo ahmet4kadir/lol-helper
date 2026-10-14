@@ -75,7 +75,8 @@
         "repo": "lol-helper",
         "releaseType": "release"
       }
-    ]
+    ],
+    "npmRebuild": false
   },
   "homepage": "https://github.com/ahmet4kadir/lol-helper",
   "repository": {
