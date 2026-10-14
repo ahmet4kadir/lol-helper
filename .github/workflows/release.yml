@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   windows:
@@ -57,14 +58,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # The job summary is public even when logs require sign-in.
-      - name: Summary
-        if: always() && steps.exists.outputs.yes == 'false'
+      # On failure, file the log tail as an issue so it can be read without signing in.
+      - name: Report failure
+        if: failure() && steps.exists.outputs.yes == 'false'
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           {
-            echo '### Build log (tail)'
+            echo "Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
             echo '```'
-            tail -n 120 build.log 2>/dev/null || echo 'no build.log'
+            tail -n 150 build.log 2>/dev/null || echo 'no build.log'
             echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          } > issue.md
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "Release build failed: v${{ steps.v.outputs.version }} (run $GITHUB_RUN_NUMBER)" --body-file issue.md
