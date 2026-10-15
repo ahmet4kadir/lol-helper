@@ -1,6 +1,6 @@
 {
   "name": "lol-helper",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "League of Legends companion: champ select insights and a movable in-game overlay, built on the official LCU and Live Client Data APIs.",
   "main": "./out/main/index.js",
   "author": "Ahmet Kadir Doğan",

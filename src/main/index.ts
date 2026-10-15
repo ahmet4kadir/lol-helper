@@ -270,10 +270,29 @@ ipcMain.handle(IPC.sendChampSelectChat, async (_e, body: string) => {
   }
 })
 ipcMain.on(IPC.refreshMeta, () => void refreshMeta(true))
-ipcMain.on(IPC.installUpdate, () => {
+ipcMain.on(IPC.installUpdate, () => void installUpdate())
+
+/**
+ * Tear down everything that touches the system before the installer takes
+ * over: the global keyboard hook (a dying process holding a low-level hook
+ * stalls Windows input), global shortcuts and the always-on-top overlay.
+ */
+async function installUpdate(): Promise<void> {
   quitting = true
+  try {
+    keys.stop()
+    globalShortcut.unregisterAll()
+    lcu.stop()
+    live.stop()
+    if (overlayWin && !overlayWin.isDestroyed()) overlayWin.destroy()
+    tray?.destroy()
+  } catch {
+    /* best effort */
+  }
+  // Give the hook thread a moment to unwind before the process is replaced.
+  await new Promise((r) => setTimeout(r, 300))
   updater?.installNow()
-})
+}
 ipcMain.on(IPC.checkUpdate, () => updater?.check())
 ipcMain.handle(IPC.lookupPlayer, async (_e, riotId: string) => {
   if (MOCK) {
@@ -381,8 +400,8 @@ app.whenReady().then(async () => {
 
 app.on('before-quit', () => {
   quitting = true
-  globalShortcut.unregisterAll()
   keys.stop()
+  globalShortcut.unregisterAll()
   lcu.stop()
   live.stop()
 })

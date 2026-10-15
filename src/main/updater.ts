@@ -31,7 +31,8 @@ export function startUpdater(onStatus: (s: UpdateStatus) => void): { installNow:
   setInterval(check, 60 * 60 * 1000)
 
   return {
-    installNow: () => autoUpdater.quitAndInstall(false, true),
+    // Silent install, relaunch when done.
+    installNow: () => autoUpdater.quitAndInstall(true, true),
     check
   }
 }
