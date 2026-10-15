@@ -396,6 +396,8 @@ export const IPC = {
   getMatch: 'match:get',
   /** main -> overlay: a chat line typed in game, e.g. "mid flash". */
   chatCommand: 'chat:command',
+  /** main -> overlay: screen position of a left click made while Tab was held. */
+  tabClick: 'tab:click',
   installUpdate: 'update:install',
   checkUpdate: 'update:check'
 } as const

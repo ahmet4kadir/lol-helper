@@ -44,6 +44,11 @@ export class KeyHook extends EventEmitter {
         }
         if (e.keycode === UiohookKey.Shift || e.keycode === UiohookKey.ShiftRight) this.shift = false
       })
+      // Left clicks while Tab is held: the scoreboard. The overlay maps the
+      // position onto the enemy spell column the user calibrated.
+      uIOhook.on('mousedown', (e) => {
+        if (this.tabDown && this.inGame && e.button === 1) this.emit('tabclick', { x: e.x, y: e.y })
+      })
       uIOhook.start()
       this.available = true
     } catch (e) {

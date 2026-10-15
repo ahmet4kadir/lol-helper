@@ -273,6 +273,9 @@ live.on('snapshot', (snap: LiveSnapshot) => {
 // ---------- Keyboard (Tab held) ----------
 const keys = new KeyHook()
 keys.on('tab', (held: boolean) => patch({ tabHeld: held }))
+keys.on('tabclick', (pt: { x: number; y: number }) => {
+  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send(IPC.tabClick, pt)
+})
 keys.on('chat', (text: string) => {
   if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send(IPC.chatCommand, text)
 })

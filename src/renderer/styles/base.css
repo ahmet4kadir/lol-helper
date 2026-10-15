@@ -1689,3 +1689,132 @@ button.primary {
 .dock input[type='range'] {
   width: 90px;
 }
+
+/* ---------- scoreboard calibration ---------- */
+.widget.scoreboardw {
+  min-width: 0;
+  background: transparent;
+  border-color: transparent;
+  backdrop-filter: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.widget.scoreboardw .handle {
+  position: absolute;
+  top: -22px;
+  left: 0;
+  min-width: 170px;
+  background: rgba(11, 14, 20, 0.85);
+  border-radius: 6px;
+  border-bottom: none;
+  display: none;
+}
+
+.widget.scoreboardw:not(.locked) .handle {
+  display: flex;
+}
+
+.widget.scoreboardw .body {
+  padding: 0;
+  height: 100%;
+}
+
+.scoreboard {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-rows: repeat(5, 1fr);
+  pointer-events: none;
+}
+
+.scoreboard.calibrating {
+  outline: 2px dashed var(--gold);
+  background: rgba(200, 170, 110, 0.12);
+}
+
+.sb-row {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  border-bottom: 1px dashed rgba(200, 170, 110, 0.5);
+  font-size: 9px;
+  color: var(--gold);
+  text-align: center;
+  line-height: 1;
+}
+
+.sb-row span:first-child {
+  border-bottom: 1px dotted rgba(200, 170, 110, 0.35);
+}
+
+/* ---------- gold on the scoreboard ---------- */
+.widget.goldw {
+  min-width: 0;
+  background: transparent;
+  border-color: transparent;
+  backdrop-filter: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.widget.goldw .handle {
+  position: absolute;
+  top: -44px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 170px;
+  background: rgba(11, 14, 20, 0.85);
+  border-radius: 6px;
+  border-bottom: none;
+  display: none;
+}
+
+.widget.goldw:not(.locked) .handle {
+  display: flex;
+}
+
+.widget.goldw .body {
+  padding: 0;
+  height: 100%;
+}
+
+.goldsb {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.goldsb.calibrating {
+  outline: 2px dashed var(--gold);
+  background: rgba(200, 170, 110, 0.12);
+}
+
+.goldsb-total {
+  position: absolute;
+  top: -22px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  text-shadow: 0 0 4px #000, 0 0 4px #000;
+}
+
+.goldsb-rows {
+  display: grid;
+  grid-template-rows: repeat(5, 1fr);
+  height: 100%;
+}
+
+.goldsb-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: 0 0 4px #000, 0 0 4px #000;
+}
+
+.goldsb.calibrating .goldsb-row {
+  border-bottom: 1px dashed rgba(200, 170, 110, 0.5);
+}

@@ -23,6 +23,11 @@ const api = {
     ipcRenderer.on(IPC.chatCommand, handler)
     return () => ipcRenderer.removeListener(IPC.chatCommand, handler)
   },
+  onTabClick: (cb: (pt: { x: number; y: number }) => void): (() => void) => {
+    const handler = (_e: unknown, pt: { x: number; y: number }) => cb(pt)
+    ipcRenderer.on(IPC.tabClick, handler)
+    return () => ipcRenderer.removeListener(IPC.tabClick, handler)
+  },
   installUpdate: (): void => ipcRenderer.send(IPC.installUpdate),
   checkUpdate: (): void => ipcRenderer.send(IPC.checkUpdate)
 }

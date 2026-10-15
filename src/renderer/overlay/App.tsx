@@ -15,6 +15,7 @@ import { BaseTimer } from './widgets/BaseTimer'
 import { PlayersOverlay } from './widgets/PlayersOverlay'
 import { Deaths } from './widgets/Deaths'
 import { Minimap } from './widgets/Minimap'
+import { Scoreboard } from './widgets/Scoreboard'
 
 const WIDGETS: { id: string; title: string }[] = [
   { id: 'clock', title: 'Game' },
@@ -24,9 +25,10 @@ const WIDGETS: { id: string; title: string }[] = [
   { id: 'base', title: 'Base → lane' },
   { id: 'deaths', title: 'Deaths (auto)' },
   { id: 'minimap', title: 'Minimap markers' },
+  { id: 'scoreboard', title: 'Tab spell clicks (calibrate)' },
   { id: 'lanes', title: 'Lanes' },
   { id: 'players', title: 'Players' },
-  { id: 'gold', title: 'Gold (Tab)' }
+  { id: 'gold', title: 'Gold on Tab (calibrate)' }
 ]
 
 function loadLS<T>(key: string, fallback: T): T {
@@ -60,30 +62,38 @@ export function App() {
   useEffect(() => saveLS('gold:mode', goldMode), [goldMode])
   useEffect(() => saveLS('overlay:scale', globalScale), [globalScale])
 
+  /** Start (or restart) a timer for an enemy's spell slot, with a short on-screen note. */
+  const startSpell = (p: import('@shared/types').LivePlayer, slot: '1' | '2' | 'R', lane: string) => {
+    if (!live) return
+    const t = live.gameTime
+    let cd: number
+    let label: string
+    if (slot === 'R') {
+      const c = Object.values(s.champions).find((x) => x.key === p.rawChampionName.replace('game_character_displayname_', ''))
+      cd = ultCooldown(p, c ? s.champDetails[c.id] : undefined)
+      label = 'ult'
+    } else {
+      const key = slot === '1' ? p.spell1Key : p.spell2Key
+      cd = spellCooldown(key, p, false)
+      label = SUMMONER_LABEL[key] ?? key
+    }
+    if (cd <= 0) return
+    setTimersState((cur) => ({ ...cur, [`${p.riotId}:${slot}`]: { end: t + cd, total: cd } }))
+    setToast(`${lane.toLowerCase()} ${label}: ${fmtTime(cd)}`)
+    setTimeout(() => setToast(null), 2500)
+  }
+
   // "mid flash" typed in chat -> timer on that enemy's Flash.
   useEffect(() => {
     return window.helper.onChatCommand((text) => {
       const cmd = parseChatCommand(text)
       if (!cmd || !live) return
-      const pair = lanePairs(live).find((x) => x.lane === cmd.lane)
-      const p = pair?.enemy
+      const p = lanePairs(live).find((x) => x.lane === cmd.lane)?.enemy
       if (!p) return
-      const t = live.gameTime
-      let slot: string
-      let cd: number
-      if (cmd.spell === 'R') {
-        const c = Object.values(s.champions).find((x) => x.key === p.rawChampionName.replace('game_character_displayname_', ''))
-        slot = 'R'
-        cd = ultCooldown(p, c ? s.champDetails[c.id] : undefined)
-      } else {
-        slot = p.spell1Key === cmd.spell ? '1' : p.spell2Key === cmd.spell ? '2' : ''
-        cd = spellCooldown(cmd.spell, p, false)
-      }
-      if (!slot || cd <= 0) return
-      setTimersState((cur) => ({ ...cur, [`${p.riotId}:${slot}`]: { end: t + cd, total: cd } }))
-      setToast(`${cmd.lane.toLowerCase()} ${slot === 'R' ? 'ult' : SUMMONER_LABEL[cmd.spell] ?? cmd.spell}: ${fmtTime(cd)}`)
-      setTimeout(() => setToast(null), 2500)
+      const slot: '1' | '2' | 'R' | '' = cmd.spell === 'R' ? 'R' : p.spell1Key === cmd.spell ? '1' : p.spell2Key === cmd.spell ? '2' : ''
+      if (slot) startSpell(p, slot, cmd.lane)
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live, s.champions, s.champDetails])
 
   const on = (id: string) => !hidden.has(id)
@@ -185,6 +195,23 @@ export function App() {
         </Widget>
       )}
 
+      {on('scoreboard') && live && (
+        <Widget
+          {...w('scoreboard')}
+          title="Tab spells"
+          defaultPos={{ x: Math.max(0, window.innerWidth * 0.62), y: Math.max(0, window.innerHeight * 0.3) }}
+          defaultSize={{ w: 28, h: 230 }}
+          resizable
+          className="scoreboardw"
+        >
+          <Scoreboard
+            live={live}
+            editMode={edit}
+            onSpellClick={(p, slot) => startSpell(p, slot, lanePairs(live).find((x) => x.enemy?.riotId === p.riotId)?.lane ?? '')}
+          />
+        </Widget>
+      )}
+
       {on('lanes') && (
         <Widget {...w('lanes')} title="Lanes" defaultPos={{ x: 240, y: 300 }}>
           {live ? <LaneDiff live={live} /> : none}
@@ -198,8 +225,15 @@ export function App() {
       )}
 
       {showGold && (
-        <Widget {...w('gold')} title={`Gold difference (items)${edit && goldMode === 'tab' ? ' · shows while Tab is held' : ''}`} defaultPos={{ x: Math.max(0, window.innerWidth / 2 - 180), y: 60 }} className="goldw">
-          {live ? <GoldDiff live={live} /> : none}
+        <Widget
+          {...w('gold')}
+          title={`Gold${edit && goldMode === 'tab' ? ' · while Tab is held' : ''}`}
+          defaultPos={{ x: Math.max(0, window.innerWidth / 2 - 40), y: Math.max(0, window.innerHeight * 0.3) }}
+          defaultSize={{ w: 80, h: 230 }}
+          resizable
+          className="goldw"
+        >
+          {live ? <GoldDiff live={live} editMode={edit} /> : none}
         </Widget>
       )}
     </>
