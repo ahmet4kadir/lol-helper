@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { IPC, type AppState } from '@shared/types'
+import { IPC, type AppState, type MatchDetail } from '@shared/types'
 
 const api = {
   getState: (): Promise<AppState> => ipcRenderer.invoke(IPC.getState),
@@ -17,6 +17,7 @@ const api = {
   champSelectAction: (championId: number, lock: boolean): Promise<{ ok: boolean; type?: string; error?: string }> =>
     ipcRenderer.invoke(IPC.champSelectAction, championId, lock),
   lookupPlayer: (riotId: string): Promise<{ ok: boolean; puuid?: string; error?: string }> => ipcRenderer.invoke(IPC.lookupPlayer, riotId),
+  getMatch: (gameId: number): Promise<{ ok: boolean; match?: MatchDetail; error?: string }> => ipcRenderer.invoke(IPC.getMatch, gameId),
   installUpdate: (): void => ipcRenderer.send(IPC.installUpdate),
   checkUpdate: (): void => ipcRenderer.send(IPC.checkUpdate)
 }

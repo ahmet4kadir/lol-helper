@@ -1,4 +1,4 @@
-import type { ChampionRecord, PlayerProfile, RankEntry, RecentGame } from '@shared/types'
+import type { ChampionRecord, MatchDetail, MatchParticipant, MatchTeam, PlayerProfile, RankEntry, RecentGame } from '@shared/types'
 import type { LcuConnector } from './connector'
 
 /**
@@ -133,6 +133,87 @@ async function fetchProfile(lcu: LcuConnector, puuid: string): Promise<PlayerPro
     champions: aggregate(recent, Array.isArray(mastery) ? mastery : []),
     fetchedAt: Date.now()
   }
+}
+
+// ---------- full match detail ----------
+
+const matchCache = new Map<number, MatchDetail>()
+
+function num(v: unknown): number {
+  const n = Number(v)
+  return Number.isFinite(n) ? n : 0
+}
+
+export function parseMatch(raw: any): MatchDetail {
+  const identities: any[] = raw.participantIdentities ?? []
+  const nameOf = (pid: number): { riotId: string; puuid: string } => {
+    const id = identities.find((x) => x.participantId === pid)?.player ?? {}
+    const riotId = id.gameName ? `${id.gameName}#${id.tagLine ?? ''}` : (id.summonerName ?? '')
+    return { riotId, puuid: String(id.puuid ?? '') }
+  }
+  const participants: MatchParticipant[] = (raw.participants ?? []).map((p: any) => {
+    const s = p.stats ?? {}
+    const { riotId, puuid } = nameOf(p.participantId)
+    return {
+      riotId,
+      puuid,
+      championId: num(p.championId),
+      teamId: num(p.teamId),
+      lane: String(p.timeline?.lane ?? ''),
+      role: String(p.timeline?.role ?? ''),
+      level: num(s.champLevel),
+      kills: num(s.kills),
+      deaths: num(s.deaths),
+      assists: num(s.assists),
+      cs: num(s.totalMinionsKilled) + num(s.neutralMinionsKilled),
+      gold: num(s.goldEarned),
+      damageToChamps: num(s.totalDamageDealtToChampions),
+      damageTaken: num(s.totalDamageTaken),
+      visionScore: num(s.visionScore),
+      wardsPlaced: num(s.wardsPlaced),
+      controlWards: num(s.visionWardsBoughtInGame),
+      items: [s.item0, s.item1, s.item2, s.item3, s.item4, s.item5].map(num),
+      trinket: num(s.item6),
+      spell1Id: num(p.spell1Id),
+      spell2Id: num(p.spell2Id),
+      keystone: num(s.perk0),
+      largestMultiKill: num(s.largestMultiKill)
+    }
+  })
+  const teams: MatchTeam[] = (raw.teams ?? []).map((t: any) => {
+    const members = participants.filter((p) => p.teamId === num(t.teamId))
+    return {
+      teamId: num(t.teamId),
+      win: t.win === 'Win' || t.win === true,
+      kills: members.reduce((a, p) => a + p.kills, 0),
+      gold: members.reduce((a, p) => a + p.gold, 0),
+      towers: num(t.towerKills),
+      dragons: num(t.dragonKills),
+      barons: num(t.baronKills),
+      grubs: num(t.hordeKills),
+      heralds: num(t.riftHeraldKills),
+      bans: (t.bans ?? []).map((b: any) => num(b.championId)).filter((x: number) => x > 0),
+      participants: members
+    }
+  })
+  return {
+    gameId: num(raw.gameId),
+    queueId: num(raw.queueId),
+    gameMode: String(raw.gameMode ?? ''),
+    createdAt: num(raw.gameCreation),
+    durationSec: num(raw.gameDuration),
+    patch: String(raw.gameVersion ?? '').split('.').slice(0, 2).join('.'),
+    teams
+  }
+}
+
+export async function getMatch(lcu: LcuConnector, gameId: number): Promise<MatchDetail> {
+  const hit = matchCache.get(gameId)
+  if (hit) return hit
+  const raw = await lcu.request<any>('GET', `/lol-match-history/v1/games/${gameId}`)
+  const m = parseMatch(raw)
+  matchCache.set(gameId, m)
+  return m
 }
 
 export function getProfile(lcu: LcuConnector, puuid: string, force = false): Promise<PlayerProfile> {

@@ -7,7 +7,8 @@ import { loadStaticData } from './data/ddragon'
 import { loadMeta } from './stats/provider'
 import { fetchBuild } from './stats/lolalyticsBuild'
 import { champSelectAction } from './lcu/champSelectActions'
-import { getProfile, resolvePuuid } from './lcu/players'
+import { getMatch, getProfile, resolvePuuid } from './lcu/players'
+import { mockMatch } from './mock'
 import { loadChampionDetail } from './data/ddragon'
 import type { LiveSnapshot, PlayerProfile } from '@shared/types'
 import { KeyHook } from './input/keyHook'
@@ -294,6 +295,14 @@ async function installUpdate(): Promise<void> {
   updater?.installNow()
 }
 ipcMain.on(IPC.checkUpdate, () => updater?.check())
+ipcMain.handle(IPC.getMatch, async (_e, gameId: number) => {
+  if (MOCK) return { ok: true, match: mockMatch(gameId) }
+  try {
+    return { ok: true, match: await getMatch(lcu, gameId) }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+})
 ipcMain.handle(IPC.lookupPlayer, async (_e, riotId: string) => {
   if (MOCK) {
     const p = mockProfile(riotId)

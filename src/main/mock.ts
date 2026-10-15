@@ -1,4 +1,4 @@
-import type { ChampSelectState, LiveSnapshot, PlayerProfile } from '@shared/types'
+import type { ChampSelectState, LiveSnapshot, MatchDetail, MatchParticipant, MatchTeam, PlayerProfile } from '@shared/types'
 
 /** Deterministic fake profile so the players panels can be developed offline. */
 export function mockProfile(riotId: string, puuid = `mock-${riotId}`): PlayerProfile {
@@ -127,4 +127,57 @@ export function mockLive(t: number): LiveSnapshot {
       ...(t > 540 ? [{ id: 2, name: 'HordeKill', time: 540 }] : [])
     ]
   }
+}
+
+/** Fake full match for the lookup panel in mock mode. */
+export function mockMatch(gameId: number): MatchDetail {
+  const names = ['You#TR1', 'Ally1#TR1', 'Ally2#TR1', 'Ally3#TR1', 'Ally4#TR1', 'Enemy1#TR1', 'Enemy2#TR1', 'Enemy3#TR1', 'Enemy4#TR1', 'Enemy5#TR1']
+  const champs = [103, 266, 64, 222, 412, 86, 121, 134, 51, 117]
+  const lanes = ['MIDDLE', 'TOP', 'JUNGLE', 'BOTTOM', 'BOTTOM', 'TOP', 'JUNGLE', 'MIDDLE', 'BOTTOM', 'BOTTOM']
+  const roles = ['SOLO', 'SOLO', 'NONE', 'DUO_CARRY', 'DUO_SUPPORT', 'SOLO', 'NONE', 'SOLO', 'DUO_CARRY', 'DUO_SUPPORT']
+  const participants: MatchParticipant[] = names.map((riotId, i) => {
+    const r = (gameId * 31 + i * 97) >>> 0
+    return {
+      riotId,
+      puuid: `mock-${riotId}`,
+      championId: champs[i],
+      teamId: i < 5 ? 100 : 200,
+      lane: lanes[i],
+      role: roles[i],
+      level: 13 + (r % 6),
+      kills: r % 12,
+      deaths: (r >> 2) % 9,
+      assists: (r >> 4) % 15,
+      cs: 90 + (r % 180),
+      gold: 9000 + (r % 8000),
+      damageToChamps: 8000 + (r % 30000),
+      damageTaken: 10000 + (r % 25000),
+      visionScore: 8 + (r % 40),
+      wardsPlaced: 4 + (r % 15),
+      controlWards: r % 4,
+      items: [3020, 3089, 4645, 3157, 3135, 1058].map((x, k) => (k < 3 + (r % 3) ? x : 0)),
+      trinket: 3364,
+      spell1Id: 4,
+      spell2Id: i === 2 || i === 6 ? 11 : 14,
+      keystone: 8112,
+      largestMultiKill: 1 + (r % 3)
+    }
+  })
+  const team = (teamId: number): MatchTeam => {
+    const members = participants.filter((p) => p.teamId === teamId)
+    return {
+      teamId,
+      win: teamId === 100 ? gameId % 3 !== 0 : gameId % 3 === 0,
+      kills: members.reduce((a, p) => a + p.kills, 0),
+      gold: members.reduce((a, p) => a + p.gold, 0),
+      towers: (gameId + teamId) % 11,
+      dragons: (gameId + teamId) % 5,
+      barons: (gameId + teamId) % 2,
+      grubs: (gameId + teamId) % 7,
+      heralds: (gameId + teamId) % 2,
+      bans: teamId === 100 ? [157, 238, 55, 777, 11] : [105, 7, 84, 141, 245],
+      participants: members
+    }
+  }
+  return { gameId, queueId: 420, gameMode: 'CLASSIC', createdAt: Date.now() - gameId * 3600_000, durationSec: 1500 + (gameId % 900), patch: '16.20', teams: [team(100), team(200)] }
 }

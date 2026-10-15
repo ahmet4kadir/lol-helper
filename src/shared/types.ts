@@ -206,6 +206,56 @@ export interface RecentGame {
   goldEarned: number
 }
 
+export interface MatchParticipant {
+  riotId: string
+  puuid: string
+  championId: number
+  teamId: number // 100 blue, 200 red
+  lane: string
+  role: string
+  level: number
+  kills: number
+  deaths: number
+  assists: number
+  cs: number
+  gold: number
+  damageToChamps: number
+  damageTaken: number
+  visionScore: number
+  wardsPlaced: number
+  controlWards: number
+  items: number[] // item0..item5 (0 = empty)
+  trinket: number
+  spell1Id: number
+  spell2Id: number
+  keystone: number
+  largestMultiKill: number
+}
+
+export interface MatchTeam {
+  teamId: number
+  win: boolean
+  kills: number
+  gold: number
+  towers: number
+  dragons: number
+  barons: number
+  grubs: number
+  heralds: number
+  bans: number[]
+  participants: MatchParticipant[]
+}
+
+export interface MatchDetail {
+  gameId: number
+  queueId: number
+  gameMode: string
+  createdAt: number
+  durationSec: number
+  patch: string
+  teams: MatchTeam[]
+}
+
 /** A short judgement about a player derived from recent games. */
 export interface PlayerTrait {
   label: string
@@ -323,6 +373,8 @@ export const IPC = {
   refreshMeta: 'meta:refresh',
   /** renderer -> main (invoke): look a player up by "Name#TAG"; result lands in state.profiles. */
   lookupPlayer: 'player:lookup',
+  /** renderer -> main (invoke): full details of one game from the client's match history. */
+  getMatch: 'match:get',
   installUpdate: 'update:install',
   checkUpdate: 'update:check'
 } as const
