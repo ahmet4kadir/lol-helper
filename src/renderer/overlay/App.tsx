@@ -72,7 +72,7 @@ export function App() {
     let label: string
     if (slot === 'R') {
       const c = Object.values(s.champions).find((x) => x.key === p.rawChampionName.replace('game_character_displayname_', ''))
-      cd = ultCooldown(p, c ? s.champDetails[c.id] : undefined)
+      cd = ultCooldown(p, c ? s.champDetails[c.id] : undefined, s.items)
       label = 'ult'
     } else {
       const key = slot === '1' ? p.spell1Key : p.spell2Key
@@ -172,7 +172,7 @@ export function App() {
 
       {on('spells') && (
         <Widget {...w('spells')} title="Enemy spells & ults" defaultPos={{ x: 420, y: 300 }} interactive>
-          {live ? <SpellTimers live={live} champions={s.champions} champDetails={s.champDetails} version={s.ddragonVersion} timers={timers} setTimers={setTimers} /> : none}
+          {live ? <SpellTimers live={live} champions={s.champions} champDetails={s.champDetails} items={s.items} version={s.ddragonVersion} timers={timers} setTimers={setTimers} /> : none}
         </Widget>
       )}
 

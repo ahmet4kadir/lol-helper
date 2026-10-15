@@ -74,6 +74,9 @@ export interface ItemInfo {
   tags: string[]
   /** True for finished items (nothing builds from them). */
   final: boolean
+  /** Ability haste and ultimate-only haste, parsed from the item description. */
+  haste: number
+  ultHaste: number
 }
 
 export interface RuneInfo {

@@ -21,7 +21,7 @@ export interface StaticData {
 }
 
 /** Bump when the shape changes so stale caches are refetched. */
-const SCHEMA = 5
+const SCHEMA = 6
 const ONE_DAY = 24 * 60 * 60 * 1000
 
 function cachePath(): string {
@@ -68,8 +68,17 @@ async function fetchLatest(): Promise<StaticData> {
   }
 
   const itemData = await getJson<{
-    data: Record<string, { name: string; gold: { total: number; purchasable?: boolean }; stats?: Record<string, number>; tags?: string[]; into?: string[]; maps?: Record<string, boolean> }>
+    data: Record<
+      string,
+      { name: string; description?: string; gold: { total: number; purchasable?: boolean }; stats?: Record<string, number>; tags?: string[]; into?: string[]; maps?: Record<string, boolean> }
+    >
   }>(`${base}/item.json`)
+  // Haste is not in `stats`; the description carries "<attention>15</attention> Ability Haste".
+  const hasteOf = (desc: string, kind: 'Ability' | 'Ultimate'): number => {
+    const re = new RegExp(`<attention>(\\d+)</attention>\\s*${kind} Haste`, 'i')
+    const m = re.exec(desc)
+    return m ? Number(m[1]) : 0
+  }
   const items: Record<number, ItemInfo> = {}
   for (const [id, it] of Object.entries(itemData.data))
     items[Number(id)] = {
@@ -79,7 +88,9 @@ async function fetchLatest(): Promise<StaticData> {
       msFlat: it.stats?.FlatMovementSpeedMod ?? 0,
       msPct: it.stats?.PercentMovementSpeedMod ?? 0,
       tags: it.tags ?? [],
-      final: !(it.into && it.into.length > 0) && (it.gold?.purchasable ?? true) && (it.maps?.['11'] ?? true)
+      final: !(it.into && it.into.length > 0) && (it.gold?.purchasable ?? true) && (it.maps?.['11'] ?? true),
+      haste: hasteOf(it.description ?? '', 'Ability'),
+      ultHaste: hasteOf(it.description ?? '', 'Ultimate')
     }
 
   const runeData = await getJson<{ id: number; slots: { runes: { id: number; name: string; icon: string }[] }[] }[]>(

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { ChampionDetail, ChampionInfo, LivePlayer, LiveSnapshot } from '@shared/types'
+import type { ChampionDetail, ChampionInfo, ItemInfo, LivePlayer, LiveSnapshot } from '@shared/types'
 import { IONIAN_BOOTS_ID, SUMMONER_CD, SUMMONER_HASTE, SUMMONER_LABEL } from '@shared/gameConstants'
 import { champIcon } from '../../hooks/useAppState'
 import { fmtTime, lanePairs, LANE_SHORT } from '../lanes'
@@ -15,11 +15,15 @@ export function spellCooldown(key: string, p: LivePlayer, cosmic: boolean): numb
   return Math.round((base * 100) / (100 + haste))
 }
 
-export function ultCooldown(p: LivePlayer, d?: ChampionDetail): number {
+/** Ultimate cooldown by rank, reduced by ability haste and ultimate haste from the player's items. */
+export function ultCooldown(p: LivePlayer, d?: ChampionDetail, items?: Record<number, ItemInfo>): number {
   if (!d || d.ultCooldown.length === 0) return 0
   const rank = p.level >= 16 ? 3 : p.level >= 11 ? 2 : p.level >= 6 ? 1 : 0
   if (rank === 0) return 0
-  return d.ultCooldown[Math.min(rank, d.ultCooldown.length) - 1]
+  const base = d.ultCooldown[Math.min(rank, d.ultCooldown.length) - 1]
+  let haste = 0
+  if (items) for (const it of p.items) haste += ((items[it.itemID]?.haste ?? 0) + (items[it.itemID]?.ultHaste ?? 0)) * it.count
+  return Math.round((base * 100) / (100 + haste))
 }
 
 export interface Timer {
@@ -37,6 +41,7 @@ export function SpellTimers({
   live,
   champions,
   champDetails,
+  items,
   version,
   timers,
   setTimers
@@ -44,6 +49,7 @@ export function SpellTimers({
   live: LiveSnapshot
   champions: Record<number, ChampionInfo>
   champDetails: Record<number, ChampionDetail>
+  items: Record<number, ItemInfo>
   version: string
   timers: Record<string, Timer>
   setTimers: (f: (cur: Record<string, Timer>) => Record<string, Timer>) => void
@@ -92,7 +98,7 @@ export function SpellTimers({
       {enemies.map(({ lane, p }) => {
         const c = champOf(p)
         const ci = cosmic[p.riotId] ?? false
-        const ult = ultCooldown(p, c ? champDetails[c.id] : undefined)
+        const ult = ultCooldown(p, c ? champDetails[c.id] : undefined, items)
         return (
           <div key={p.riotId} className="spell-row">
             <span className="lane">{LANE_SHORT[lane]}</span>
