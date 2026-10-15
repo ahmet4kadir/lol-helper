@@ -1872,3 +1872,7 @@ button.primary {
   color: #000;
   font-weight: 700;
 }
+
+.mm-marker {
+  transition: left 1s linear, top 1s linear;
+}

@@ -11,7 +11,7 @@ import { Objectives } from './widgets/Objectives'
 import { GoldDiff } from './widgets/GoldDiff'
 import { LaneDiff } from './widgets/LaneDiff'
 import { SpellTimers, spellCooldown, ultCooldown, type Timer } from './widgets/SpellTimers'
-import { BaseTimer } from './widgets/BaseTimer'
+import { BaseTimer, travelTime } from './widgets/BaseTimer'
 import { PlayersOverlay } from './widgets/PlayersOverlay'
 import { Deaths } from './widgets/Deaths'
 import { Minimap } from './widgets/Minimap'
@@ -92,6 +92,14 @@ export function App() {
       if (!cmd || !live) return
       const p = lanePairs(live).find((x) => x.lane === cmd.lane)?.enemy
       if (!p) return
+      if (cmd.spell === 'RECALL') {
+        const c = Object.values(s.champions).find((x) => x.key === p.rawChampionName.replace('game_character_displayname_', ''))
+        const { recall, travel } = travelTime(p, cmd.lane, c ? s.champDetails[c.id] : undefined, s.items, ret.shifts[p.team][cmd.lane] ?? 0)
+        ret.start(p.riotId, recall + travel)
+        setToast(`${cmd.lane.toLowerCase()} back in lane in ${fmtTime(recall + travel)}`)
+        setTimeout(() => setToast(null), 2500)
+        return
+      }
       const slot: '1' | '2' | 'R' | '' = cmd.spell === 'R' ? 'R' : p.spell1Key === cmd.spell ? '1' : p.spell2Key === cmd.spell ? '2' : ''
       if (slot) startSpell(p, slot, cmd.lane)
     })

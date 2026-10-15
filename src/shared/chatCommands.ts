@@ -6,7 +6,7 @@
 
 export interface ChatCommand {
   lane: 'TOP' | 'JUNGLE' | 'MIDDLE' | 'BOTTOM' | 'UTILITY'
-  /** Summoner spell key (SummonerFlash…) or 'R' for the ultimate. */
+  /** Summoner spell key (SummonerFlash…), 'R' for the ultimate, or 'RECALL' for a base trip. */
   spell: string
 }
 
@@ -56,6 +56,12 @@ const SPELLS: Record<string, string> = {
   hayalet: 'SummonerHaste',
   cleanse: 'SummonerBoost',
   smite: 'SummonerSmite',
+  b: 'RECALL',
+  bb: 'RECALL',
+  back: 'RECALL',
+  recall: 'RECALL',
+  base: 'RECALL',
+  gitti: 'RECALL',
   r: 'R',
   ult: 'R',
   ulti: 'R',
