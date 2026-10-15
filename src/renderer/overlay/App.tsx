@@ -16,6 +16,7 @@ import { PlayersOverlay } from './widgets/PlayersOverlay'
 import { Deaths } from './widgets/Deaths'
 import { Minimap } from './widgets/Minimap'
 import { Scoreboard } from './widgets/Scoreboard'
+import { BuildAdvice } from './widgets/BuildAdvice'
 
 const WIDGETS: { id: string; title: string }[] = [
   { id: 'clock', title: 'Game' },
@@ -26,6 +27,7 @@ const WIDGETS: { id: string; title: string }[] = [
   { id: 'deaths', title: 'Deaths (auto)' },
   { id: 'minimap', title: 'Minimap markers' },
   { id: 'scoreboard', title: 'Tab spell clicks (calibrate)' },
+  { id: 'build', title: 'Build advice' },
   { id: 'lanes', title: 'Lanes' },
   { id: 'players', title: 'Players' },
   { id: 'gold', title: 'Gold on Tab (calibrate)' }
@@ -209,6 +211,12 @@ export function App() {
             editMode={edit}
             onSpellClick={(p, slot) => startSpell(p, slot, lanePairs(live).find((x) => x.enemy?.riotId === p.riotId)?.lane ?? '')}
           />
+        </Widget>
+      )}
+
+      {on('build') && live && (
+        <Widget {...w('build')} title="Build" defaultPos={{ x: 720, y: 560 }} className="buildw">
+          <BuildAdvice s={s} />
         </Widget>
       )}
 

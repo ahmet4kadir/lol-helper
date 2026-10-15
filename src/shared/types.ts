@@ -70,6 +70,10 @@ export interface ItemInfo {
   msFlat: number
   /** Percent move speed from item stats, 0.07 = 7%. Passives written only in text are not included. */
   msPct: number
+  /** Data Dragon tags: Armor, SpellBlock, Health, LifeSteal, CriticalStrike, ArmorPenetration, MagicPenetration, Boots… */
+  tags: string[]
+  /** True for finished items (nothing builds from them). */
+  final: boolean
 }
 
 export interface RuneInfo {

@@ -21,7 +21,7 @@ export interface StaticData {
 }
 
 /** Bump when the shape changes so stale caches are refetched. */
-const SCHEMA = 4
+const SCHEMA = 5
 const ONE_DAY = 24 * 60 * 60 * 1000
 
 function cachePath(): string {
@@ -68,7 +68,7 @@ async function fetchLatest(): Promise<StaticData> {
   }
 
   const itemData = await getJson<{
-    data: Record<string, { name: string; gold: { total: number }; stats?: Record<string, number> }>
+    data: Record<string, { name: string; gold: { total: number; purchasable?: boolean }; stats?: Record<string, number>; tags?: string[]; into?: string[]; maps?: Record<string, boolean> }>
   }>(`${base}/item.json`)
   const items: Record<number, ItemInfo> = {}
   for (const [id, it] of Object.entries(itemData.data))
@@ -77,7 +77,9 @@ async function fetchLatest(): Promise<StaticData> {
       name: it.name,
       gold: it.gold?.total ?? 0,
       msFlat: it.stats?.FlatMovementSpeedMod ?? 0,
-      msPct: it.stats?.PercentMovementSpeedMod ?? 0
+      msPct: it.stats?.PercentMovementSpeedMod ?? 0,
+      tags: it.tags ?? [],
+      final: !(it.into && it.into.length > 0) && (it.gold?.purchasable ?? true) && (it.maps?.['11'] ?? true)
     }
 
   const runeData = await getJson<{ id: number; slots: { runes: { id: number; name: string; icon: string }[] }[] }[]>(

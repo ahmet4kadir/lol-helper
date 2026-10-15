@@ -78,7 +78,8 @@ let buildInflight = ''
 function onChampSelectChange(): void {
   const cs = state.champSelect
   if (!cs) {
-    if (state.build) patch({ build: null, buildError: null })
+    // Keep the build through loading and the game itself; drop it once we are back in the client.
+    if (state.build && !IN_GAME.has(state.phase) && !state.liveConnected) patch({ build: null, buildError: null })
     return
   }
   loadChampSelectProfiles()
@@ -132,8 +133,37 @@ function loadChampSelectProfiles(): void {
 const liveLookups = new Set<string>()
 let liveGameKey = ''
 
+/** In game: make sure we hold the meta build for the champion we are actually playing. */
+function ensureLiveBuild(snap: LiveSnapshot): void {
+  const meId = snap.activePlayer?.riotId
+  const me = snap.players.find((p) => p.riotId === meId)
+  if (!me) return
+  const champ = Object.values(state.champions).find((c) => c.key === me.rawChampionName.replace('game_character_displayname_', ''))
+  if (!champ) return
+  const lane = ({ TOP: 'top', JUNGLE: 'jungle', MIDDLE: 'middle', BOTTOM: 'bottom', UTILITY: 'utility' } as Record<string, string>)[me.position] || metaDefaultLane(champ.id) || champ.roles[0] || 'middle'
+  const key = `${champ.id}:${lane}`
+  if (state.build && state.build.championId === champ.id) return
+  const cached = buildCache.get(key)
+  if (cached) {
+    patch({ build: cached, buildError: null })
+    return
+  }
+  if (buildInflight === key) return
+  buildInflight = key
+  fetchBuild(champ, lane)
+    .then((b) => {
+      buildCache.set(key, b)
+      patch({ build: b, buildError: null })
+    })
+    .catch((e) => patch({ buildError: (e as Error).message }))
+    .finally(() => {
+      if (buildInflight === key) buildInflight = ''
+    })
+}
+
 /** Once a game is visible, resolve every Riot ID to a puuid and load profiles + champion details. */
 function onLiveSnapshot(snap: LiveSnapshot): void {
+  ensureLiveBuild(snap)
   const key = snap.players.map((p) => p.riotId).join('|')
   if (key !== liveGameKey) {
     liveGameKey = key

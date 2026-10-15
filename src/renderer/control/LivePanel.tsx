@@ -1,6 +1,7 @@
 import type { AppState, LivePlayer } from '@shared/types'
 import { PlayerCard } from './PlayerCard'
 import { lanePairs, mySide, fmtTime } from '../overlay/lanes'
+import { BuildAdvice } from '../overlay/widgets/BuildAdvice'
 
 export { fmtTime }
 
@@ -23,6 +24,10 @@ export function LivePanel({ s }: { s: AppState }) {
           {fmtTime(live.gameTime)} · {live.gameMode}
         </span>
       </div>
+      <section className="team" style={{ marginBottom: 12 }}>
+        <h2>Build advice</h2>
+        <BuildAdvice s={s} />
+      </section>
       <div className="live-grid">
         <div className="live-col">
           <h2 className="col-title ally">Your team</h2>

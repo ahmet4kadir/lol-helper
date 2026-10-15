@@ -1818,3 +1818,57 @@ button.primary {
 .goldsb.calibrating .goldsb-row {
   border-bottom: 1px dashed rgba(200, 170, 110, 0.5);
 }
+
+/* ---------- build advice ---------- */
+.widget.buildw { min-width: 280px; max-width: 360px; }
+
+.badv-mine {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.badv-mine img {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.badv-mine .mono { margin-left: auto; }
+
+.badv-row {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 4px;
+  border-radius: 6px;
+  border-left: 3px solid var(--border);
+  margin: 2px 0;
+  font-size: 12px;
+}
+
+.badv-row.core { border-left-color: var(--gold); }
+.badv-row.counter { border-left-color: var(--red); }
+.badv-row.option { border-left-color: var(--muted); }
+.badv-row.can { background: rgba(34, 197, 94, 0.08); }
+
+.badv-row img {
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+}
+
+.badv-name { font-weight: 600; }
+.badv-text .muted { font-size: 11px; }
+
+.badv-can {
+  margin-left: 6px;
+  font-size: 10px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--ok);
+  color: #000;
+  font-weight: 700;
+}

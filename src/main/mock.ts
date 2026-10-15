@@ -95,7 +95,7 @@ export function mockLive(t: number): LiveSnapshot {
     level,
     isDead: riotId === 'Enemy2#TR1' ? t % 60 < 35 : riotId === 'Ally3#TR1' ? t % 90 < 20 : false,
     respawnTimer: riotId === 'Enemy2#TR1' ? Math.max(0, 35 - (t % 60)) : riotId === 'Ally3#TR1' ? Math.max(0, 20 - (t % 90)) : 0,
-    items: [{ itemID: 1001, displayName: 'Boots', price: 300, count: 1, slot: 0 }],
+    items: [{ itemID: 1001, displayName: 'Boots', price: 300, count: 1, slot: 0 }, ...(t > 300 ? [{ itemID: 3047, displayName: 'Steelcaps', price: 1100, count: 1, slot: 1 }, { itemID: 3075, displayName: 'Thornmail', price: 2450, count: 1, slot: 2 }] : [])],
     kills: Math.floor(t / 300),
     deaths: 0,
     assists: 1,
