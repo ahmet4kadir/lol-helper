@@ -60,6 +60,24 @@ export class LiveClient extends EventEmitter {
   }
 }
 
+/**
+ * Display names are localized ("Flaş", "Tutuştur"); rawDisplayName is not:
+ * "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName". Pull the Summoner* token.
+ */
+export function spellKey(sp: any): string {
+  const raw: string = sp?.rawDisplayName ?? sp?.rawDescription ?? ''
+  const m = /(Summoner[A-Za-z]+?)(?:_|$|DisplayName|Description)/.exec(raw.replace('GeneratedTip_SummonerSpell_', ''))
+  if (m) return m[1].replace(/(DisplayName|Description)$/, '')
+  // Fallback: English display name.
+  const name: string = sp?.displayName ?? ''
+  const byName: Record<string, string> = {
+    Flash: 'SummonerFlash', Ignite: 'SummonerDot', Teleport: 'SummonerTeleport', Exhaust: 'SummonerExhaust', Heal: 'SummonerHeal',
+    Barrier: 'SummonerBarrier', Cleanse: 'SummonerBoost', Ghost: 'SummonerHaste', Smite: 'SummonerSmite'
+  }
+  for (const [k, v] of Object.entries(byName)) if (name.includes(k)) return v
+  return ''
+}
+
 export function parseAllGameData(raw: any): LiveSnapshot {
   const players: LivePlayer[] = (raw.allPlayers ?? []).map((p: any) => ({
     riotId: p.riotId ?? p.summonerName ?? '',
@@ -83,7 +101,9 @@ export function parseAllGameData(raw: any): LiveSnapshot {
     creepScore: p.scores?.creepScore ?? 0,
     wardScore: p.scores?.wardScore ?? 0,
     spell1: p.summonerSpells?.summonerSpellOne?.displayName ?? '',
-    spell2: p.summonerSpells?.summonerSpellTwo?.displayName ?? ''
+    spell2: p.summonerSpells?.summonerSpellTwo?.displayName ?? '',
+    spell1Key: spellKey(p.summonerSpells?.summonerSpellOne),
+    spell2Key: spellKey(p.summonerSpells?.summonerSpellTwo)
   }))
 
   const ap = raw.activePlayer

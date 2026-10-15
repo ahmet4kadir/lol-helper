@@ -1,16 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAppState } from '../hooks/useAppState'
 import { Widget } from './Widget'
 import { useVisibility } from './useVisibility'
-import { fmtTime } from './lanes'
+import { useReturnTimers } from './useReturnTimers'
+import { fmtTime, lanePairs } from './lanes'
+import { parseChatCommand } from '@shared/chatCommands'
+import { SUMMONER_LABEL } from '@shared/gameConstants'
 import { CampTimers } from './widgets/CampTimers'
 import { Objectives } from './widgets/Objectives'
 import { GoldDiff } from './widgets/GoldDiff'
 import { LaneDiff } from './widgets/LaneDiff'
-import { SpellTimers } from './widgets/SpellTimers'
+import { SpellTimers, spellCooldown, ultCooldown, type Timer } from './widgets/SpellTimers'
 import { BaseTimer } from './widgets/BaseTimer'
 import { PlayersOverlay } from './widgets/PlayersOverlay'
 import { Deaths } from './widgets/Deaths'
+import { Minimap } from './widgets/Minimap'
 
 const WIDGETS: { id: string; title: string }[] = [
   { id: 'clock', title: 'Game' },
@@ -19,16 +23,25 @@ const WIDGETS: { id: string; title: string }[] = [
   { id: 'spells', title: 'Enemy spells & ults' },
   { id: 'base', title: 'Base → lane' },
   { id: 'deaths', title: 'Deaths (auto)' },
+  { id: 'minimap', title: 'Minimap markers' },
   { id: 'lanes', title: 'Lanes' },
   { id: 'players', title: 'Players' },
   { id: 'gold', title: 'Gold (Tab)' }
 ]
 
-function loadGoldMode(): 'tab' | 'always' {
+function loadLS<T>(key: string, fallback: T): T {
   try {
-    return localStorage.getItem('gold:mode') === 'always' ? 'always' : 'tab'
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as T) : fallback
   } catch {
-    return 'tab'
+    return fallback
+  }
+}
+function saveLS(key: string, v: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(v))
+  } catch {
+    /* ignore */
   }
 }
 
@@ -37,24 +50,51 @@ export function App() {
   const edit = s.overlayEditMode
   const live = s.live
   const { hidden, toggle } = useVisibility()
-  const [goldMode, setGoldMode] = useState<'tab' | 'always'>(loadGoldMode)
-  const setGold = (m: 'tab' | 'always') => {
-    setGoldMode(m)
-    try {
-      localStorage.setItem('gold:mode', m)
-    } catch {
-      /* ignore */
-    }
-  }
+  const [goldMode, setGoldMode] = useState<'tab' | 'always'>(() => loadLS('gold:mode', 'tab'))
+  const [globalScale, setGlobalScale] = useState<number>(() => loadLS('overlay:scale', 1))
+  const [timers, setTimersState] = useState<Record<string, Timer>>({})
+  const [toast, setToast] = useState<string | null>(null)
+  const setTimers = (f: (cur: Record<string, Timer>) => Record<string, Timer>) => setTimersState(f)
+  const ret = useReturnTimers(live, s.champions, s.champDetails, s.items)
+
+  useEffect(() => saveLS('gold:mode', goldMode), [goldMode])
+  useEffect(() => saveLS('overlay:scale', globalScale), [globalScale])
+
+  // "mid flash" typed in chat -> timer on that enemy's Flash.
+  useEffect(() => {
+    return window.helper.onChatCommand((text) => {
+      const cmd = parseChatCommand(text)
+      if (!cmd || !live) return
+      const pair = lanePairs(live).find((x) => x.lane === cmd.lane)
+      const p = pair?.enemy
+      if (!p) return
+      const t = live.gameTime
+      let slot: string
+      let cd: number
+      if (cmd.spell === 'R') {
+        const c = Object.values(s.champions).find((x) => x.key === p.rawChampionName.replace('game_character_displayname_', ''))
+        slot = 'R'
+        cd = ultCooldown(p, c ? s.champDetails[c.id] : undefined)
+      } else {
+        slot = p.spell1Key === cmd.spell ? '1' : p.spell2Key === cmd.spell ? '2' : ''
+        cd = spellCooldown(cmd.spell, p, false)
+      }
+      if (!slot || cd <= 0) return
+      setTimersState((cur) => ({ ...cur, [`${p.riotId}:${slot}`]: { end: t + cd, total: cd } }))
+      setToast(`${cmd.lane.toLowerCase()} ${slot === 'R' ? 'ult' : SUMMONER_LABEL[cmd.spell] ?? cmd.spell}: ${fmtTime(cd)}`)
+      setTimeout(() => setToast(null), 2500)
+    })
+  }, [live, s.champions, s.champDetails])
 
   const on = (id: string) => !hidden.has(id)
   const showGold = on('gold') && (edit || goldMode === 'always' || !s.keyHookAvailable || s.tabHeld)
-  const w = (id: string) => ({ id, editMode: edit, onClose: () => toggle(id) })
+  const w = (id: string) => ({ id, editMode: edit, globalScale, onClose: () => toggle(id) })
   const none = <div className="muted">-</div>
 
   return (
     <>
-      {edit && <div className="overlay-hint">Overlay edit mode: drag widgets, × to hide, Ctrl+Shift+L to lock</div>}
+      {edit && <div className="overlay-hint">Overlay edit mode: drag widgets, +/− to resize, × to hide, Ctrl+Shift+L to lock</div>}
+      {toast && <div className="overlay-toast">{toast}</div>}
 
       {edit && (
         <Widget id="dock" title="Widgets" editMode={edit} defaultPos={{ x: 24, y: 40 }} className="dock">
@@ -63,17 +103,25 @@ export function App() {
               <input type="checkbox" checked={on(x.id)} onChange={() => toggle(x.id)} /> {x.title}
             </label>
           ))}
-          <div className="dock-row muted" style={{ marginTop: 6 }}>
+          <div className="dock-row" style={{ marginTop: 8 }}>
+            <span className="muted">Size</span>
+            <input type="range" min={0.6} max={1.4} step={0.05} value={globalScale} onChange={(e) => setGlobalScale(Number(e.target.value))} />
+            <span className="mono muted">{Math.round(globalScale * 100)}%</span>
+          </div>
+          <div className="dock-row muted">
             Gold widget:
-            <select value={goldMode} onChange={(e) => setGold(e.target.value as 'tab' | 'always')}>
+            <select value={goldMode} onChange={(e) => setGoldMode(e.target.value as 'tab' | 'always')}>
               <option value="tab">while Tab is held</option>
               <option value="always">always</option>
             </select>
           </div>
-          {!s.keyHookAvailable && <div className="muted" style={{ fontSize: 11 }}>Tab detection unavailable, gold stays visible.</div>}
+          <div className="muted" style={{ fontSize: 11 }}>
+            {s.keyHookAvailable ? 'Tab detection and chat commands: on' : `Keyboard hook off${s.keyHookError ? `: ${s.keyHookError}` : ''}`}
+          </div>
           <button style={{ marginTop: 8 }} onClick={() => window.helper.openControl()}>
             Open main window
           </button>
+          <button onClick={() => window.helper.setOverlayEditMode(false)}>Lock overlay</button>
         </Widget>
       )}
 
@@ -104,19 +152,36 @@ export function App() {
 
       {on('spells') && (
         <Widget {...w('spells')} title="Enemy spells & ults" defaultPos={{ x: 420, y: 300 }} interactive>
-          {live ? <SpellTimers live={live} champions={s.champions} champDetails={s.champDetails} version={s.ddragonVersion} /> : none}
+          {live ? <SpellTimers live={live} champions={s.champions} champDetails={s.champDetails} version={s.ddragonVersion} timers={timers} setTimers={setTimers} /> : none}
         </Widget>
       )}
 
       {on('base') && (
         <Widget {...w('base')} title="Base → lane" defaultPos={{ x: 420, y: 560 }} interactive>
-          {live ? <BaseTimer live={live} champions={s.champions} champDetails={s.champDetails} items={s.items} /> : none}
+          {live ? (
+            <BaseTimer live={live} champions={s.champions} champDetails={s.champDetails} items={s.items} info={ret.info} shifts={ret.shifts} start={ret.start} clear={ret.clear} />
+          ) : (
+            none
+          )}
         </Widget>
       )}
 
       {on('deaths') && (
         <Widget {...w('deaths')} title="Deaths" defaultPos={{ x: 720, y: 300 }}>
-          {live ? <Deaths live={live} champions={s.champions} champDetails={s.champDetails} items={s.items} /> : none}
+          {live ? <Deaths live={live} champions={s.champions} info={ret.info} /> : none}
+        </Widget>
+      )}
+
+      {on('minimap') && live && (
+        <Widget
+          {...w('minimap')}
+          title="Minimap"
+          defaultPos={{ x: Math.max(0, window.innerWidth - 300), y: Math.max(0, window.innerHeight - 300) }}
+          defaultSize={{ w: 260, h: 260 }}
+          resizable
+          className="minimapw"
+        >
+          <Minimap live={live} champions={s.champions} info={ret.info} timers={timers} editMode={edit} />
         </Widget>
       )}
 
@@ -133,7 +198,7 @@ export function App() {
       )}
 
       {showGold && (
-        <Widget {...w('gold')} title="Gold difference (items)" defaultPos={{ x: Math.max(0, window.innerWidth / 2 - 180), y: 60 }} className="goldw">
+        <Widget {...w('gold')} title={`Gold difference (items)${edit && goldMode === 'tab' ? ' · shows while Tab is held' : ''}`} defaultPos={{ x: Math.max(0, window.innerWidth / 2 - 180), y: 60 }} className="goldw">
           {live ? <GoldDiff live={live} /> : none}
         </Widget>
       )}

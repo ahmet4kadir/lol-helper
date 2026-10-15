@@ -125,8 +125,11 @@ export interface LivePlayer {
   assists: number
   creepScore: number
   wardScore: number
-  spell1: string
+  spell1: string // localized display name
   spell2: string
+  /** Language-independent key from rawDisplayName, e.g. SummonerFlash, SummonerDot (Ignite). */
+  spell1Key: string
+  spell2Key: string
 }
 
 export interface LiveEvent {
@@ -343,6 +346,7 @@ export interface AppState {
   /** True while the scoreboard key (Tab) is held in game. */
   tabHeld: boolean
   keyHookAvailable: boolean
+  keyHookError: string
   mock: boolean
 }
 
@@ -369,6 +373,7 @@ export const initialAppState: AppState = {
   overlayEditMode: true,
   tabHeld: false,
   keyHookAvailable: false,
+  keyHookError: '',
   mock: false
 }
 
@@ -389,6 +394,8 @@ export const IPC = {
   lookupPlayer: 'player:lookup',
   /** renderer -> main (invoke): full details of one game from the client's match history. */
   getMatch: 'match:get',
+  /** main -> overlay: a chat line typed in game, e.g. "mid flash". */
+  chatCommand: 'chat:command',
   installUpdate: 'update:install',
   checkUpdate: 'update:check'
 } as const

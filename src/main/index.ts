@@ -1,4 +1,6 @@
 import { app, BrowserWindow, globalShortcut, ipcMain, Menu, Tray } from 'electron'
+import { readFileSync, writeFileSync } from 'fs'
+import { join } from 'path'
 import { LcuConnector } from './lcu/connector'
 import { parseChampSelect, type RawChampSelectSession } from './lcu/champSelect'
 import { sendChampSelectMessage } from './lcu/chat'
@@ -62,6 +64,7 @@ function onPhaseChange(phase: string): void {
 }
 
 function updateOverlayVisibility(): void {
+  keys.inGame = MOCK || IN_GAME.has(state.phase) || state.liveConnected
   if (!overlayWin || overlayWin.isDestroyed()) return
   const show = MOCK || IN_GAME.has(state.phase) || state.liveConnected
   if (show && !overlayWin.isVisible()) overlayWin.showInactive()
@@ -270,6 +273,9 @@ live.on('snapshot', (snap: LiveSnapshot) => {
 // ---------- Keyboard (Tab held) ----------
 const keys = new KeyHook()
 keys.on('tab', (held: boolean) => patch({ tabHeld: held }))
+keys.on('chat', (text: string) => {
+  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.webContents.send(IPC.chatCommand, text)
+})
 
 // ---------- Meta stats ----------
 async function refreshMeta(force = false): Promise<void> {
@@ -390,6 +396,29 @@ ipcMain.handle(IPC.champSelectAction, async (_e, championId: number, lock: boole
 function applyEditMode(edit: boolean): void {
   if (overlayWin && !overlayWin.isDestroyed()) setOverlayEditMode(overlayWin, edit)
   patch({ overlayEditMode: edit })
+  saveSettings({ overlayEditMode: edit })
+}
+
+// ---------- tiny persisted settings ----------
+interface Settings {
+  overlayEditMode?: boolean
+}
+function settingsPath(): string {
+  return join(app.getPath('userData'), 'settings.json')
+}
+function loadSettings(): Settings {
+  try {
+    return JSON.parse(readFileSync(settingsPath(), 'utf8')) as Settings
+  } catch {
+    return {}
+  }
+}
+function saveSettings(p: Partial<Settings>): void {
+  try {
+    writeFileSync(settingsPath(), JSON.stringify({ ...loadSettings(), ...p }))
+  } catch {
+    /* best effort */
+  }
 }
 
 function showControl(): void {
@@ -439,14 +468,15 @@ app.whenReady().then(async () => {
   wireControl(controlWin)
   overlayWin = createOverlayWindow()
   overlayWin.hide() // shown by updateOverlayVisibility() once a game is running
-  applyEditMode(true)
+  // Locked (click-through) by default; Ctrl+Shift+L or the main window unlocks for layout.
+  applyEditMode(loadSettings().overlayEditMode ?? false)
   createTray()
 
   // Ctrl+Shift+L toggles overlay edit/locked mode from inside the game.
   globalShortcut.register('CommandOrControl+Shift+L', () => applyEditMode(!state.overlayEditMode))
 
   keys.start()
-  patch({ keyHookAvailable: keys.available })
+  patch({ keyHookAvailable: keys.available, keyHookError: keys.error })
   updater = startUpdater((update) => patch({ update }))
 
   try {

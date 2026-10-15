@@ -18,6 +18,11 @@ const api = {
     ipcRenderer.invoke(IPC.champSelectAction, championId, lock),
   lookupPlayer: (riotId: string): Promise<{ ok: boolean; puuid?: string; error?: string }> => ipcRenderer.invoke(IPC.lookupPlayer, riotId),
   getMatch: (gameId: number): Promise<{ ok: boolean; match?: MatchDetail; error?: string }> => ipcRenderer.invoke(IPC.getMatch, gameId),
+  onChatCommand: (cb: (text: string) => void): (() => void) => {
+    const handler = (_e: unknown, text: string) => cb(text)
+    ipcRenderer.on(IPC.chatCommand, handler)
+    return () => ipcRenderer.removeListener(IPC.chatCommand, handler)
+  },
   installUpdate: (): void => ipcRenderer.send(IPC.installUpdate),
   checkUpdate: (): void => ipcRenderer.send(IPC.checkUpdate)
 }

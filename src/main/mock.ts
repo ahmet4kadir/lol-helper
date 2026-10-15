@@ -102,7 +102,9 @@ export function mockLive(t: number): LiveSnapshot {
     creepScore: Math.floor(t / 7),
     wardScore: 2,
     spell1: 'Flash',
-    spell2: 'Ignite'
+    spell2: 'Ignite',
+    spell1Key: 'SummonerFlash',
+    spell2Key: position === 'JUNGLE' ? 'SummonerSmite' : 'SummonerDot'
   })
   return {
     gameTime: t,

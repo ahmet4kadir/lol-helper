@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
 import type { ChampionDetail, ChampionInfo, ItemInfo, LivePlayer, LiveSnapshot } from '@shared/types'
 import { BOOTS_MS, HOMEGUARD_DECAY_SEC, HOMEGUARD_PCT, LANE_DISTANCE, RECALL_SEC } from '@shared/gameConstants'
 import { champIcon } from '../../hooks/useAppState'
+import type { ReturnInfo } from '../useReturnTimers'
 import { fmtTime, lanePairs, LANE_SHORT } from '../lanes'
 
 /**
@@ -27,9 +27,11 @@ export function travelTime(
   p: LivePlayer,
   lane: string,
   d: ChampionDetail | undefined,
-  items: Record<number, ItemInfo>
+  items: Record<number, ItemInfo>,
+  /** Extra units to travel because of destroyed turrets (negative when their own turrets fell). */
+  laneShift = 0
 ): { recall: number; travel: number; ms: number } {
-  const dist = LANE_DISTANCE[lane] ?? LANE_DISTANCE.MIDDLE
+  const dist = Math.max(2000, (LANE_DISTANCE[lane] ?? LANE_DISTANCE.MIDDLE) + laneShift)
   const ms = moveSpeed(p, d, items)
   // Homeguard: during the decay window average bonus is HOMEGUARD_PCT / 2.
   const homeguardDist = ms * HOMEGUARD_DECAY_SEC * (1 + HOMEGUARD_PCT / 2)
@@ -45,29 +47,29 @@ export function travelTime(
 
 /**
  * Base-to-lane timer: click "Recall" when an enemy starts recalling, "At base"
- * if they are already there (died / you saw them in fountain). Travel time
- * comes from the champion's base move speed plus their boots.
+ * if they are already there. Travel time comes from the champion's base move
+ * speed plus their boots. Dead enemies and fresh respawns are tracked
+ * automatically through the shared return timers.
  */
 export function BaseTimer({
   live,
   champions,
   champDetails,
-  items
+  items,
+  info,
+  shifts,
+  start,
+  clear
 }: {
   live: LiveSnapshot
   champions: Record<number, ChampionInfo>
   champDetails: Record<number, ChampionDetail>
   items: Record<number, ItemInfo>
+  info: Record<string, ReturnInfo>
+  shifts: Record<'ORDER' | 'CHAOS', Record<string, number>>
+  start: (riotId: string, seconds: number) => void
+  clear: (riotId: string) => void
 }) {
-  const [ends, setEnds] = useState<Record<string, number>>({})
-  const [lastT, setLastT] = useState(live.gameTime)
-  const t = live.gameTime
-
-  useEffect(() => {
-    if (t < lastT - 5) setEnds({})
-    setLastT(t)
-  }, [t, lastT])
-
   const champOf = (p: LivePlayer) => Object.values(champions).find((c) => c.key === p.rawChampionName.replace('game_character_displayname_', ''))
   const enemies = lanePairs(live)
     .map((x) => ({ lane: x.lane, p: x.enemy }))
@@ -78,11 +80,9 @@ export function BaseTimer({
       {enemies.map(({ lane, p }) => {
         const c = champOf(p)
         const d = c ? champDetails[c.id] : undefined
-        const { recall, travel, ms } = travelTime(p, lane, d, items)
-        const end = ends[p.riotId]
-        const left = end !== undefined ? end - t : undefined
-        // Dead enemies: respawn timer + travel is the real answer.
-        const deadLeft = p.isDead ? Math.round(p.respawnTimer) + travel : undefined
+        const shift = shifts[p.team][lane] ?? 0
+        const { recall, travel, ms } = travelTime(p, lane, d, items, shift)
+        const r = info[p.riotId]
         return (
           <div key={p.riotId} className="base-row">
             <span className="lane">{LANE_SHORT[lane]}</span>
@@ -90,22 +90,18 @@ export function BaseTimer({
             <span className="muted mono" style={{ fontSize: 10, width: 30 }}>
               {ms}
             </span>
-            <button className="camp" onClick={() => setEnds((e) => ({ ...e, [p.riotId]: t + recall + travel }))} title={`${recall}s recall + ${travel}s travel`}>
+            <button className="camp" onClick={() => start(p.riotId, recall + travel)} title={`${recall}s recall + ${travel}s travel${shift ? ` (turrets: ${shift > 0 ? '+' : ''}${shift} units)` : ''}`}>
               Recall
             </button>
-            <button className="camp" onClick={() => setEnds((e) => ({ ...e, [p.riotId]: t + travel }))} title={`${travel}s travel`}>
+            <button className="camp" onClick={() => start(p.riotId, travel)} title={`${travel}s travel`}>
               At base
             </button>
-            <span className={`mono base-time ${left !== undefined && left > 0 ? (left <= 5 ? 'soon' : 'running') : ''}`}>
-              {deadLeft !== undefined ? (
-                <span title="dead: respawn + travel">☠ {fmtTime(deadLeft)}</span>
-              ) : left !== undefined && left > 0 ? (
-                fmtTime(left)
-              ) : left !== undefined ? (
-                'IN LANE'
-              ) : (
-                `${recall + travel}s`
-              )}
+            <span
+              className={`mono base-time ${r ? (r.laneIn <= 5 ? 'soon' : 'running') : ''}`}
+              onClick={() => r && !r.dead && clear(p.riotId)}
+              title={r ? (r.dead ? 'dead: respawn + travel' : 'click to clear') : 'full trip'}
+            >
+              {r ? (r.dead ? `☠ ${fmtTime(r.laneIn)}` : fmtTime(r.laneIn)) : `${recall + travel}s`}
             </span>
           </div>
         )

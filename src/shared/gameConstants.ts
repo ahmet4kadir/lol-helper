@@ -48,17 +48,28 @@ export const OBJECTIVES: ObjectiveDef[] = [
   { id: 'baron', label: 'Baron', firstSpawn: 1500, respawn: 360, killEvent: 'BaronKill' }
 ]
 
-/** Summoner spell base cooldowns (seconds). */
+/** Summoner spell base cooldowns (seconds), keyed by Riot's spell key (language independent). */
 export const SUMMONER_CD: Record<string, number> = {
-  Flash: 300,
-  Ignite: 180,
-  Teleport: 360,
-  Exhaust: 210,
-  Heal: 240,
-  Barrier: 180,
-  Cleanse: 210,
-  Ghost: 210,
-  Smite: 90
+  SummonerFlash: 300,
+  SummonerDot: 180, // Ignite
+  SummonerTeleport: 360,
+  SummonerExhaust: 210,
+  SummonerHeal: 240,
+  SummonerBarrier: 180,
+  SummonerBoost: 210, // Cleanse
+  SummonerHaste: 210, // Ghost
+  SummonerSmite: 90
+}
+export const SUMMONER_LABEL: Record<string, string> = {
+  SummonerFlash: 'Flash',
+  SummonerDot: 'Ignite',
+  SummonerTeleport: 'TP',
+  SummonerExhaust: 'Exhaust',
+  SummonerHeal: 'Heal',
+  SummonerBarrier: 'Barrier',
+  SummonerBoost: 'Cleanse',
+  SummonerHaste: 'Ghost',
+  SummonerSmite: 'Smite'
 }
 
 /** Summoner spell haste sources. CD = base × 100 / (100 + haste). */
@@ -80,6 +91,9 @@ export const LANE_DISTANCE: Record<string, number> = {
   BOTTOM: 10100,
   UTILITY: 10100
 }
+
+/** Each destroyed turret tier moves the lane front by about this many units. */
+export const TURRET_STEP = 1800
 
 /** Movement speed by boots item id, for the base-to-lane timer. */
 export const BOOTS_MS: Record<number, number> = {
