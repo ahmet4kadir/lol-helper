@@ -77,7 +77,7 @@ export function playerTraits(profile: PlayerProfile, currentPosition?: string): 
   const isSupport = a.supportShare >= 0.5
   const f = (n: number, d = 1) => n.toFixed(d)
 
-  // Vision — thresholds differ for supports.
+  // Vision. Thresholds differ for supports.
   const visGood = isSupport ? 2.0 : 1.0
   const visBad = isSupport ? 1.2 : 0.5
   if (a.visionPerMin >= visGood) out.push({ label: 'Good vision', tone: 'good', detail: `${f(a.visionPerMin, 2)} vision/min` })

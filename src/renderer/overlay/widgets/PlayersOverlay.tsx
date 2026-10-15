@@ -12,7 +12,7 @@ export function PlayersOverlay({ s }: { s: AppState }) {
     p ? Object.values(s.champions).find((c) => c.key === p.rawChampionName.replace('game_character_displayname_', '')) : undefined
 
   const Row = ({ p, lane }: { p?: LivePlayer; lane: string }) => {
-    if (!p) return <div className="po-row muted">—</div>
+    if (!p) return <div className="po-row muted">-</div>
     const c = champOf(p)
     const prof = s.profiles[s.livePuuids[p.riotId] ?? '']
     const rec = c ? recordFor(prof, c.id) : undefined

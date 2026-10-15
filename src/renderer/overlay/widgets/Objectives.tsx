@@ -24,5 +24,5 @@ export function Objectives({ gameTime, events }: { gameTime: number; events: Liv
       </div>
     )
   }).filter(Boolean)
-  return <div className="objs">{rows.length ? rows : <div className="muted">—</div>}</div>
+  return <div className="objs">{rows.length ? rows : <div className="muted">-</div>}</div>
 }

@@ -10,7 +10,7 @@ export const LANE_LABEL: Record<string, string> = {
   middle: 'Mid',
   bottom: 'ADC',
   utility: 'Support',
-  '': '—'
+  '': '-'
 }
 
 export function classifyDamage(key: string, attack: number, magic: number): DamageType {
@@ -70,8 +70,8 @@ export function analyzeTeam(input: (ChampionInfo | undefined)[]): TeamAnalysis {
 
   let damageVerdict = 'No picks yet'
   if (counted > 0) {
-    if (ad >= 4) damageVerdict = `${ad} AD — one-dimensional. Armor shuts this team down.`
-    else if (ap >= 4) damageVerdict = `${ap} AP — one-dimensional. MR shuts this team down.`
+    if (ad >= 4) damageVerdict = `${ad} AD, one-dimensional. Armor shuts this team down.`
+    else if (ap >= 4) damageVerdict = `${ap} AP, one-dimensional. MR shuts this team down.`
     else if (adPct >= 65) damageVerdict = `AD heavy (${adPct}% physical).`
     else if (adPct <= 35) damageVerdict = `AP heavy (${100 - adPct}% magic).`
     else damageVerdict = `Balanced (${adPct}% physical / ${100 - adPct}% magic).`
@@ -98,8 +98,8 @@ export function buildAdvice(enemy: (ChampionInfo | undefined)[]): string[] {
   if (champs.length === 0) return []
   const a = analyzeTeam(champs)
   const out: string[] = []
-  if (a.ad >= 4) out.push('Armor first and second item — they have almost no magic damage.')
-  else if (a.ap >= 4) out.push('Magic resist first and second item — they have almost no physical damage.')
+  if (a.ad >= 4) out.push('Armor first and second item: they have almost no magic damage.')
+  else if (a.ap >= 4) out.push('Magic resist first and second item: they have almost no physical damage.')
   else if (a.adPct >= 65) out.push('Armor first, MR later.')
   else if (a.adPct <= 35) out.push('MR first, armor later.')
   else out.push('Mixed damage: balanced resists or HP items.')
@@ -108,13 +108,13 @@ export function buildAdvice(enemy: (ChampionInfo | undefined)[]): string[] {
   if (healers.length >= 2) out.push(`Anti-heal matters: ${healers.map((c) => c.name).join(', ')}.`)
 
   const tanks = champs.filter((c) => c.compTags.includes('tank'))
-  if (tanks.length >= 2) out.push(`${tanks.length} tanks — %HP / armor pen items pay off.`)
+  if (tanks.length >= 2) out.push(`${tanks.length} tanks: %HP / armor pen items pay off.`)
 
   const assassins = champs.filter((c) => c.compTags.includes('assassin'))
-  if (assassins.length >= 2) out.push(`${assassins.length} assassins — carries need early defensive item (Zhonya's / GA / Steelcaps).`)
+  if (assassins.length >= 2) out.push(`${assassins.length} assassins: carries need an early defensive item (Zhonya's / GA / Steelcaps).`)
 
   const poke = count(champs, 'poke')
-  if (poke >= 3) out.push('Heavy poke — fight early or force engage, do not siege into them.')
+  if (poke >= 3) out.push('Heavy poke: fight early or force engage, do not siege into them.')
 
   return out
 }
@@ -129,21 +129,21 @@ export function pickAdvice(
   const them = analyzeTeam(enemy)
   const out: string[] = []
   if (me.picked >= 2) {
-    if (me.ap === 0 && me.ad >= 2) out.push('Team has no AP — an AP pick makes enemy itemisation much harder.')
-    else if (me.ad === 0 && me.ap >= 2) out.push('Team has no AD — an AD pick makes enemy itemisation much harder.')
+    if (me.ap === 0 && me.ad >= 2) out.push('Team has no AP. An AP pick makes enemy itemisation much harder.')
+    else if (me.ad === 0 && me.ap >= 2) out.push('Team has no AD. An AD pick makes enemy itemisation much harder.')
   }
   for (const m of me.missing) {
     if (m === 'No frontline' && (myLane === 'top' || myLane === 'jungle' || myLane === 'utility'))
-      out.push('No frontline yet — a tank in your role fixes it.')
+      out.push('No frontline yet. A tank in your role fixes it.')
     if (m === 'No engage' && (myLane === 'jungle' || myLane === 'utility'))
-      out.push('No engage yet — pick something that starts fights.')
-    if (m === 'Hypercarry with no peel' && myLane === 'utility') out.push('Carry needs peel — enchanter / peel support.')
+      out.push('No engage yet. Pick something that starts fights.')
+    if (m === 'Hypercarry with no peel' && myLane === 'utility') out.push('Carry needs peel: enchanter or peel support.')
   }
   if (them.picked >= 3) {
-    if (them.ad >= 4) out.push('Enemy is full AD — armor-stacking tanks and bruisers are very strong here.')
-    if (them.ap >= 4) out.push('Enemy is full AP — MR scalers and spell shields are very strong here.')
+    if (them.ad >= 4) out.push('Enemy is full AD. Armor-stacking tanks and bruisers are very strong here.')
+    if (them.ap >= 4) out.push('Enemy is full AP. MR scalers and spell shields are very strong here.')
     const assassins = count(enemy.filter((c): c is ChampionInfo => !!c), 'assassin')
-    if (assassins >= 2 && (myLane === 'bottom' || myLane === 'middle')) out.push('Two+ enemy assassins — favour self-peel / mobility.')
+    if (assassins >= 2 && (myLane === 'bottom' || myLane === 'middle')) out.push('Two+ enemy assassins. Favour self-peel and mobility.')
   }
   return out
 }

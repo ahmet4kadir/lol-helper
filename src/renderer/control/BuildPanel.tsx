@@ -79,7 +79,7 @@ export function BuildPanel({
   if (!build || build.championId !== champ.id) {
     return (
       <section className="team">
-        <h2>Your build — {champ.name}</h2>
+        <h2>Your build: {champ.name}</h2>
         <div className="muted">{error ? `Build unavailable: ${error}` : 'Loading build…'}</div>
       </section>
     )
@@ -89,7 +89,7 @@ export function BuildPanel({
   return (
     <section className="team build">
       <h2>
-        Your build — {champ.name} <span className="muted">· {LANE_LABEL[build.lane] ?? build.lane} · patch {build.patch} · Emerald+</span>
+        Your build: {champ.name} <span className="muted">· {LANE_LABEL[build.lane] ?? build.lane} · patch {build.patch} · Emerald+</span>
       </h2>
 
       <div className="build-row">

@@ -77,7 +77,7 @@ export function App() {
               {s.lcuConnected ? (
                 <>
                   Client connected. <br />
-                  Queue up — champ select insights appear here automatically.
+                  Queue up. Champ select insights appear here automatically.
                 </>
               ) : (
                 <>

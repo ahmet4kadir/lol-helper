@@ -1,7 +1,7 @@
 import type { LiveSnapshot } from '@shared/types'
 import { lanePairs, LANE_SHORT, sign, splitTeams } from '../lanes'
 
-/** Level and CS lead lane by lane — more useful than a team average. */
+/** Level and CS lead lane by lane, more useful than a team average. */
 export function LaneDiff({ live }: { live: LiveSnapshot }) {
   const pairs = lanePairs(live)
   const { ally, enemy } = splitTeams(live)

@@ -1,5 +1,5 @@
 /**
- * Summoner's Rift timings in seconds. Riot changes these between seasons —
+ * Summoner's Rift timings in seconds. Riot changes these between seasons,
  * adjust here when a patch moves them.
  */
 
@@ -64,7 +64,7 @@ export const SUMMONER_CD: Record<string, number> = {
 /** Summoner spell haste sources. CD = base × 100 / (100 + haste). */
 export const SUMMONER_HASTE = {
   ionianBoots: 12, // item 3158
-  cosmicInsight: 18 // rune 8347 — not visible for enemies, toggled manually
+  cosmicInsight: 18 // rune 8347, not visible for enemies, toggled manually
 }
 export const IONIAN_BOOTS_ID = 3158
 

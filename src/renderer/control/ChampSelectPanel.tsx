@@ -118,7 +118,7 @@ function Suggestions({
           {note}
         </div>
       )}
-      {rows.length === 0 && <div className="muted">—</div>}
+      {rows.length === 0 && <div className="muted">-</div>}
       {rows.map((r) => {
         const c = champions[r.championId]
         if (!c) return null
@@ -269,7 +269,7 @@ export function ChampSelectPanel({ cs, s }: { cs: ChampSelectState; s: AppState 
           </div>
           {build.length ? build.map((t) => <div key={t} className="advice">{t}</div>) : <div className="muted advice">Waiting for enemy picks.</div>}
           <div className="chatline compact">
-            <span className="mono">{line || '—'}</span>
+            <span className="mono">{line || '-'}</span>
             <button className="primary" onClick={send} disabled={!line}>
               {sent ?? 'Send to chat'}
             </button>
@@ -298,7 +298,7 @@ export function ChampSelectPanel({ cs, s }: { cs: ChampSelectState; s: AppState 
         {meta ? (
           <>
             <Suggestions
-              title={`Top picks — ${LANE_LABEL[myLane || 'middle']}`}
+              title={`Top picks: ${LANE_LABEL[myLane || 'middle']}`}
               rows={pickRows}
               champions={champions}
               note={`${meta.source} · patch ${meta.patch} · Emerald+ · filtered to what your team needs`}
@@ -306,14 +306,14 @@ export function ChampSelectPanel({ cs, s }: { cs: ChampSelectState; s: AppState 
               onAct={act}
             />
             <Suggestions
-              title={`Bans — ${LANE_LABEL[myLane || 'middle']}`}
+              title={`Bans: ${LANE_LABEL[myLane || 'middle']}`}
               rows={laneBanRows}
               champions={champions}
               note="Strongest champions in your own lane"
               actionType={actionType}
               onAct={act}
             />
-            <Suggestions title="Bans — overall" rows={banRows} champions={champions} note="Win rate × pick rate, all lanes" actionType={actionType} onAct={act} />
+            <Suggestions title="Bans: overall" rows={banRows} champions={champions} note="Win rate × pick rate, all lanes" actionType={actionType} onAct={act} />
           </>
         ) : (
           <section className="team">

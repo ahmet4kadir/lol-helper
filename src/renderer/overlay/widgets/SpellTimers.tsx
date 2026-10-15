@@ -95,7 +95,7 @@ export function SpellTimers({
     return (
       <button className={cls} onClick={() => toggle(k, cd)} title={cd ? `${label} · ${cd}s cooldown` : `${label} · unavailable`}>
         {icon ? <img src={icon} alt="" /> : <span className="spell-text">{label}</span>}
-        <span className="spell-time mono">{running ? fmtTime(left) : cd ? `${cd}` : '—'}</span>
+        <span className="spell-time mono">{running ? fmtTime(left) : cd ? `${cd}` : '-'}</span>
       </button>
     )
   }
@@ -120,7 +120,7 @@ export function SpellTimers({
             <button
               className={`ci ${ci ? 'on' : ''}`}
               onClick={() => setCosmic((cur) => ({ ...cur, [p.riotId]: !ci }))}
-              title="Cosmic Insight (-summoner cooldown). Not visible for enemies — toggle if you know they run it."
+              title="Cosmic Insight (-summoner cooldown). Not visible for enemies. Toggle if you know they run it."
             >
               CI
             </button>

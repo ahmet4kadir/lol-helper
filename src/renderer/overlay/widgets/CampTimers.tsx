@@ -41,7 +41,7 @@ export function CampTimers({ gameTime }: { gameTime: number }) {
         cls += ' up'
       }
     } else {
-      label = '—'
+      label = '-'
     }
     return (
       <button

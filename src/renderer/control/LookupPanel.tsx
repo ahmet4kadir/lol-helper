@@ -36,7 +36,7 @@ export function LookupPanel({ s }: { s: AppState }) {
         <button className="primary" onClick={go} disabled={busy || (!s.lcuConnected && !s.mock)}>
           {busy ? 'Searching…' : 'Search'}
         </button>
-        {!s.lcuConnected && !s.mock && <span className="muted">Needs the League client running — lookups go through it.</span>}
+        {!s.lcuConnected && !s.mock && <span className="muted">Needs the League client running, lookups go through it.</span>}
         {err && <span className="warn-text">{err}</span>}
       </div>
 

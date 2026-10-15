@@ -50,11 +50,11 @@ export function App() {
   const on = (id: string) => !hidden.has(id)
   const showGold = on('gold') && (edit || goldMode === 'always' || !s.keyHookAvailable || s.tabHeld)
   const w = (id: string) => ({ id, editMode: edit, onClose: () => toggle(id) })
-  const none = <div className="muted">—</div>
+  const none = <div className="muted">-</div>
 
   return (
     <>
-      {edit && <div className="overlay-hint">Overlay edit mode — drag widgets, × to hide, Ctrl+Shift+L to lock</div>}
+      {edit && <div className="overlay-hint">Overlay edit mode: drag widgets, × to hide, Ctrl+Shift+L to lock</div>}
 
       {edit && (
         <Widget id="dock" title="Widgets" editMode={edit} defaultPos={{ x: 24, y: 40 }} className="dock">
@@ -70,7 +70,7 @@ export function App() {
               <option value="always">always</option>
             </select>
           </div>
-          {!s.keyHookAvailable && <div className="muted" style={{ fontSize: 11 }}>Tab detection unavailable — gold stays visible.</div>}
+          {!s.keyHookAvailable && <div className="muted" style={{ fontSize: 11 }}>Tab detection unavailable, gold stays visible.</div>}
           <button style={{ marginTop: 8 }} onClick={() => window.helper.openControl()}>
             Open main window
           </button>

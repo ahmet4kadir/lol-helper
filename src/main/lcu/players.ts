@@ -3,7 +3,7 @@ import type { LcuConnector } from './connector'
 
 /**
  * Player profiles through the League client's own endpoints: rank, recent
- * matches and mastery. No Riot API key involved — the client already has
+ * matches and mastery. No Riot API key involved; the client already has
  * access to this data for anyone, which is what Porofessor/Blitz use too.
  */
 
