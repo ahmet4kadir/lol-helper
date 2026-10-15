@@ -1907,3 +1907,38 @@ button.primary {
 .mm-marker {
   transition: left 1s linear, top 1s linear;
 }
+
+/* ---------- minimap anchors ---------- */
+.mm-anchor {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(200, 170, 110, 0.85);
+  color: #000;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  pointer-events: auto;
+  user-select: none;
+  touch-action: none;
+}
+
+.mm-anchor.base {
+  background: rgba(239, 68, 68, 0.85);
+  color: #fff;
+}
+
+.mm-reset {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  font-size: 10px;
+  pointer-events: auto;
+  background: rgba(11, 14, 20, 0.85);
+  border-color: var(--border);
+}

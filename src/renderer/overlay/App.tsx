@@ -142,6 +142,9 @@ export function App() {
             Open main window
           </button>
           <button onClick={() => window.helper.setOverlayEditMode(false)}>Lock overlay</button>
+          <div className="muted" style={{ fontSize: 10, marginTop: 4 }}>
+            v{s.update.version || 'dev'}
+          </div>
         </Widget>
       )}
 
