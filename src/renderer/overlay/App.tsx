@@ -210,7 +210,7 @@ export function App() {
           {...w('scoreboard')}
           title="Tab spells"
           defaultPos={{ x: Math.max(0, window.innerWidth * 0.62), y: Math.max(0, window.innerHeight * 0.3) }}
-          defaultSize={{ w: 28, h: 230 }}
+          defaultSize={{ w: 56, h: 230 }}
           resizable
           className="scoreboardw"
         >

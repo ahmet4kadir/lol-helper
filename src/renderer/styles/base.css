@@ -1736,7 +1736,6 @@ button.primary {
 
 .sb-row {
   display: grid;
-  grid-template-rows: 1fr 1fr;
   border-bottom: 1px dashed rgba(200, 170, 110, 0.5);
   font-size: 9px;
   color: var(--gold);
@@ -1744,8 +1743,39 @@ button.primary {
   line-height: 1;
 }
 
-.sb-row span:first-child {
+.scoreboard.row .sb-row {
+  grid-template-columns: 1fr 1fr;
+}
+
+.scoreboard.row .sb-row span:first-child {
+  border-right: 1px dotted rgba(200, 170, 110, 0.35);
+}
+
+.scoreboard.column .sb-row {
+  grid-template-rows: 1fr 1fr;
+}
+
+.scoreboard.column .sb-row span:first-child {
   border-bottom: 1px dotted rgba(200, 170, 110, 0.35);
+}
+
+.sb-row span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sb-tools {
+  position: absolute;
+  top: -22px;
+  right: 0;
+  display: flex;
+  gap: 2px;
+  pointer-events: auto;
+}
+
+.scoreboard {
+  position: relative;
 }
 
 /* ---------- gold on the scoreboard ---------- */
