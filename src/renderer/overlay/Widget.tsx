@@ -82,7 +82,10 @@ export function Widget({
   }
   const onPointerMove = (e: React.PointerEvent) => {
     if (!drag.current) return
-    setPos({ x: Math.max(0, e.clientX - drag.current.dx), y: Math.max(0, e.clientY - drag.current.dy) })
+    setPos({
+      x: Math.min(window.innerWidth - 20, Math.max(-200, e.clientX - drag.current.dx)),
+      y: Math.min(window.innerHeight - 20, Math.max(0, e.clientY - drag.current.dy))
+    })
   }
   const onPointerUp = () => {
     drag.current = null

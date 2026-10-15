@@ -33,12 +33,14 @@ export function createControlWindow(): BrowserWindow {
  * fullscreen). Nothing is injected into the game process.
  */
 export function createOverlayWindow(): BrowserWindow {
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize
+  // Full display bounds, not the work area: a borderless game covers the
+  // taskbar too, and the minimap sits in that bottom strip.
+  const { x, y, width, height } = screen.getPrimaryDisplay().bounds
   const win = new BrowserWindow({
     width,
     height,
-    x: 0,
-    y: 0,
+    x,
+    y,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
@@ -56,6 +58,15 @@ export function createOverlayWindow(): BrowserWindow {
   })
   win.setAlwaysOnTop(true, 'screen-saver')
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+  // Keep covering the whole display if resolution or display layout changes.
+  const fit = () => {
+    if (win.isDestroyed()) return
+    const b = screen.getPrimaryDisplay().bounds
+    win.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height })
+  }
+  screen.on('display-metrics-changed', fit)
+  screen.on('display-added', fit)
+  screen.on('display-removed', fit)
   load(win, 'overlay')
   return win
 }
