@@ -3,6 +3,7 @@ import { useAppState } from '../hooks/useAppState'
 import { ChampSelectPanel } from './ChampSelectPanel'
 import { LivePanel } from './LivePanel'
 import { LookupPanel } from './LookupPanel'
+import { HomePanel } from './HomePanel'
 
 function Pill({ on, label }: { on: boolean; label: string }) {
   return (
@@ -72,21 +73,7 @@ export function App() {
         ) : s.live ? (
           <LivePanel s={s} />
         ) : (
-          <div className="empty">
-            <div>
-              {s.lcuConnected ? (
-                <>
-                  Client connected. <br />
-                  Queue up. Champ select insights appear here automatically.
-                </>
-              ) : (
-                <>
-                  Start the League client. <br />
-                  This app only reads the local client and game APIs; nothing is injected.
-                </>
-              )}
-            </div>
-          </div>
+          <HomePanel s={s} />
         )}
       </main>
     </div>

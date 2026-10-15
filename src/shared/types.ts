@@ -298,6 +298,14 @@ export interface ChampionDetail {
   ultName: string
 }
 
+export interface LobbyMember {
+  puuid: string
+  riotId: string
+  isLeader: boolean
+  pos1: string
+  pos2: string
+}
+
 export interface UpdateStatus {
   state: 'disabled' | 'checking' | 'up-to-date' | 'downloading' | 'ready' | 'error'
   version: string
@@ -327,6 +335,10 @@ export interface AppState {
   livePuuids: Record<string, string>
   champDetails: Record<number, ChampionDetail>
   update: UpdateStatus
+  /** The logged-in player's puuid, once the client is connected. */
+  mePuuid: string
+  /** Current lobby members (including you) while in a lobby, else empty. */
+  lobby: LobbyMember[]
   overlayEditMode: boolean
   /** True while the scoreboard key (Tab) is held in game. */
   tabHeld: boolean
@@ -352,6 +364,8 @@ export const initialAppState: AppState = {
   livePuuids: {},
   champDetails: {},
   update: { state: 'disabled', version: '' },
+  mePuuid: '',
+  lobby: [],
   overlayEditMode: true,
   tabHeld: false,
   keyHookAvailable: false,

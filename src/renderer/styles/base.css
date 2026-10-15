@@ -1484,3 +1484,95 @@ button.primary {
 }
 
 .md-items .trinket { margin-left: 4px; border-radius: 50%; }
+
+/* ---------- home ---------- */
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+  align-items: start;
+}
+
+.lastgame {
+  margin-top: 12px;
+  border-left: 3px solid var(--border);
+}
+
+.lastgame.win { border-left-color: var(--ok); }
+.lastgame.loss { border-left-color: var(--red); }
+
+.lastgame-head {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.lastgame-head img, .lastgame-head .noimg {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.lastgame-head h2 {
+  font-size: 15px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
+  margin: 0;
+}
+
+.tiles.five {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 12px;
+}
+
+.pool-head {
+  display: grid;
+  grid-template-columns: 1fr 60px 60px 1.2fr;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+  padding: 4px 0;
+}
+
+.pool-line {
+  border-top: 1px solid var(--border);
+}
+
+.pool-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.pool-name img {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+}
+
+.meta-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.meta-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 3px 0;
+  font-size: 12px;
+}
+
+.meta-row img {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+}

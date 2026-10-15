@@ -10,7 +10,7 @@ import { champSelectAction } from './lcu/champSelectActions'
 import { getMatch, getProfile, resolvePuuid } from './lcu/players'
 import { mockMatch } from './mock'
 import { loadChampionDetail } from './data/ddragon'
-import type { LiveSnapshot, PlayerProfile } from '@shared/types'
+import type { LiveSnapshot, LobbyMember, PlayerProfile } from '@shared/types'
 import { KeyHook } from './input/keyHook'
 import { createControlWindow, createOverlayWindow, setOverlayEditMode, setOverlayIgnoreMouse } from './windows'
 import { trayIcon } from './trayIcon'
@@ -185,16 +185,67 @@ async function refreshFromLcu(): Promise<void> {
 
 lcu.subscribe('/lol-gameflow/v1/gameflow-phase')
 lcu.subscribe('/lol-champ-select/v1/session')
+lcu.subscribe('/lol-lobby/v2/lobby')
+
+interface RawLobby {
+  members?: { puuid?: string; summonerId?: number; gameName?: string; tagLine?: string; summonerName?: string; isLeader?: boolean; firstPositionPreference?: string; secondPositionPreference?: string }[]
+}
+
+function parseLobby(raw: RawLobby | null): LobbyMember[] {
+  return (raw?.members ?? []).map((m) => ({
+    puuid: m.puuid ?? '',
+    riotId: m.gameName ? `${m.gameName}#${m.tagLine ?? ''}` : (m.summonerName ?? ''),
+    isLeader: !!m.isLeader,
+    pos1: (m.firstPositionPreference ?? '').toLowerCase(),
+    pos2: (m.secondPositionPreference ?? '').toLowerCase()
+  }))
+}
+
+async function refreshLobby(): Promise<void> {
+  try {
+    const raw = await lcu.request<RawLobby>('GET', '/lol-lobby/v2/lobby')
+    const lobby = parseLobby(raw)
+    patch({ lobby })
+    for (const m of lobby) loadProfile(m.puuid)
+  } catch {
+    patch({ lobby: [] })
+  }
+}
+
+/** The logged-in player's own profile. Refreshed after every game so the home screen stays current. */
+async function refreshMe(force = false): Promise<void> {
+  try {
+    const me = await lcu.request<{ puuid: string }>('GET', '/lol-summoner/v1/current-summoner')
+    if (!me?.puuid) return
+    patch({ mePuuid: me.puuid })
+    const p = await getProfile(lcu, me.puuid, force)
+    storeProfile(p)
+  } catch (e) {
+    console.warn('me profile failed', (e as Error).message)
+  }
+}
 
 lcu.on('connected', () => {
   patch({ lcuConnected: true })
   void refreshFromLcu()
+  void refreshMe()
+  void refreshLobby()
 })
 lcu.on('disconnected', () => patch({ lcuConnected: false, phase: 'None', champSelect: null }))
 lcu.on('event', (ev: { uri: string; eventType: string; data: unknown }) => {
   if (ev.uri === '/lol-gameflow/v1/gameflow-phase') {
     patch({ phase: String(ev.data) })
     if (ev.data !== 'ChampSelect') patch({ champSelect: null })
+    // Fresh match history once the post-game screen shows.
+    if (ev.data === 'EndOfGame' || ev.data === 'PreEndOfGame') setTimeout(() => void refreshMe(true), 8000)
+    if (ev.data === 'Lobby' || ev.data === 'None') void refreshLobby()
+  } else if (ev.uri === '/lol-lobby/v2/lobby') {
+    if (ev.eventType === 'Delete') patch({ lobby: [] })
+    else {
+      const lobby = parseLobby(ev.data as RawLobby)
+      patch({ lobby })
+      for (const m of lobby) loadProfile(m.puuid)
+    }
   } else if (ev.uri === '/lol-champ-select/v1/session') {
     if (ev.eventType === 'Delete') patch({ champSelect: null })
     else patch({ champSelect: parseChampSelect(ev.data as RawChampSelectSession) })
@@ -233,7 +284,15 @@ async function refreshMeta(force = false): Promise<void> {
 // ---------- Mock ----------
 function startMock(): void {
   const t0 = Date.now()
-  patch({ lcuConnected: true, phase: 'ChampSelect', champSelect: mockChampSelect })
+  const me = mockProfile('You#TR1', 'c')
+  storeProfile(me)
+  patch({ lcuConnected: true, mePuuid: me.puuid, lobby: [
+    { puuid: 'c', riotId: 'You#TR1', isLeader: true, pos1: 'middle', pos2: 'top' },
+    { puuid: 'b', riotId: 'Ally1#TR1', isLeader: false, pos1: 'jungle', pos2: 'fill' }
+  ] })
+  storeProfile(mockProfile('Ally1#TR1', 'b'))
+  // Start on the home screen for 20s, then champ select, so both can be developed.
+  setTimeout(() => patch({ phase: 'ChampSelect', champSelect: mockChampSelect }), 20000)
   for (const p of mockChampSelect.myTeam) storeProfile(mockProfile(`Ally${p.cellId}#TR1`, p.puuid))
   setInterval(() => {
     const t = Math.floor((Date.now() - t0) / 1000)
